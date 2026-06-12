@@ -134,3 +134,5 @@ MENU
             elif opcion == 9:
                 print("Saliendo del sistema...")
                 break
+
+SistemaUsuarios().menu()
