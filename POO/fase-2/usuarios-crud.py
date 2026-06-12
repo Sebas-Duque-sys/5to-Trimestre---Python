@@ -21,8 +21,8 @@ class SistemaUsuarios:
         while not correo or "@" not in correo:
             print("Correo no válido. Intente nuevamente.")
             correo = str(input("Ingrese el correo del usuario: "))
-        rol = str(input("Ingrese el rol del usuario (admin/usuario): "))
-        while rol not in ["admin", "usuario"]:
+        rol = str(input("Ingrese el rol del usuario (admin/aprendiz/instructor): "))
+        while rol not in ["admin", "aprendiz", "instructor",]:
             print("Rol no válido. Intente nuevamente.")
             rol = str(input("Ingrese el rol del usuario (admin/usuario): "))
         estado = str(input("Ingrese el estado del usuario (activo/inactivo): "))
@@ -38,9 +38,9 @@ class SistemaUsuarios:
             print(f"Documento: {user.documento}, Nombre: {user.nombre}, Correo: {user.correo}, Rol: {user.rol}, Estado: {user.estado}")
     #3. Buscar usuario
     def buscar_usuario(self):
-        documento = str(input("Ingrese el documento del usuario a buscar: "))
+        buscador = str(input("Ingrese el documento o el correo del usuario a buscar: "))
         for user in self.usuarios:
-            if user.documento == documento:
+            if user.documento == buscador or user.correo == buscador:
                 print(f"Documento: {user.documento}, Nombre: {user.nombre}, Correo: {user.correo}, Rol: {user.rol}, Estado: {user.estado}")
                 return
         print("Usuario no encontrado.")
@@ -81,7 +81,7 @@ class SistemaUsuarios:
     def mostrar_activos(self):
         activos = []
         for user in self.usuarios:
-            if user.estado == "activo":
+            if user.estado == "activo" or user.estado == "Activo":
                 activos.append(user)
         for user in activos:
             print(f"Documento: {user.documento}, Nombre: {user.nombre}, Correo: {user.correo}, Rol: {user.rol}")
