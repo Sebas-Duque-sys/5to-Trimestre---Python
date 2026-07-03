@@ -12,7 +12,7 @@
 <!--Barra de Navegación-->
 <nav class="navbar navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="#">
+        <a class="navbar-brand fw-bold" href="{{ url_for('inicio') }}">
             <i class="bi bi-pc-display"></i>
             TechStore
         </a>
@@ -27,7 +27,6 @@
                 Gestión de productos
             </h3>
             <span class="badge bg-warning text-dark fs-6">
-                <!--Dudo que funcione-->
                 Total: {{ longitud }}
             </span>
         </div>
