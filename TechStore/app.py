@@ -6,7 +6,13 @@ app.secret_key = "adso2026"
 
 @app.route("/")
 def inicio():
-    return render_template("index1.html")
+    conexion = obtener_conexion()
+    cursor = conexion.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM productos")
+    productos = cursor.fetchall()
+    cursor.close()
+    conexion.close()
+    return render_template("index1.html",productos=productos)
 
 @app.route("/productos")
 def productos():
@@ -48,31 +54,36 @@ def registro_producto():
 def guardar_producto():
     codigo = request.form["codigo"]
     nombre = request.form["nombre"]
-    precio = request.form["precio"]
+    precio = float(request.form["precio"])
     categoria = request.form["categoria"]
 
-    #return render_template(
-    #    "respuesta.html",
-    #    codigo=codigo,
-    #    nombre=nombre,
-    #    precio=precio,
-    #    categoria=categoria
-    #)
+    if precio < 0:
+        flash("El precio no puede ser negativo.", "error")
 
+        return render_template(
+            "registro_producto.html",
+            codigo=codigo,
+            nombre=nombre,
+            precio=precio,
+            categoria=categoria
+        )
     conexion = obtener_conexion()
     cursor = conexion.cursor()
-    #Definir sentencia con marcadores anonimos
+    
+    #Validación de existencia de código
+    cursor.execute("SELECT 1 FROM productos WHERE codigo = %s", (codigo,))
+    validacion = cursor.fetchone()
+    #Si ya está registrado, cerrar conexión y dar mensaje de alerta
+    if validacion:
+        cursor.close()
+        conexion.close()
+        flash("El código ingresado ya existe. Por favor ingrese uno diferente.","error")
+        #Devolver a formulario de registro y guardar datos ingresados.
+        return render_template("registro_producto.html",codigo=codigo,nombre=nombre,precio=precio,categoria=categoria)
+    
+    #Si no está registrado, realizar registro
     sql = """ INSERT INTO productos VALUES (%s,%s,%s,%s) """
-    #Ejecutamos la consulta de manera indirecta, primero la estructura base y llenamos cada una de las incognitas.
-    cursor.execute(
-    sql,
-        (
-            codigo,
-            nombre,
-            precio,
-            categoria
-        )
-    )
+    cursor.execute(sql,(codigo,nombre,precio,categoria))
     #Guardan los cambios realizados por la consulta
     conexion.commit()
     #Mensaje de exito:
