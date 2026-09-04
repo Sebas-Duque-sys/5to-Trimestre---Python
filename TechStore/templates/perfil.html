@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Mi Perfil | TechStore</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+    <style>
+        .navbar-brand {
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .footer-tech {
+            background-color: #1a1d20;
+            color: #adb5bd;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #0d6efd, #084298);
+            color: white;
+        }
+
+        .profile-icon {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background-color: white;
+            color: #0d6efd;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 55px;
+            margin: auto;
+        }
+
+        .info-item {
+            border-bottom: 1px solid #dee2e6;
+            padding: 15px 0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+
+        <div class="container-fluid">
+
+            <a class="navbar-brand text-primary" href="#">
+                <i class="bi bi-cpu"></i>
+                TECHSTORE
+            </a>
+
+            <button class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+
+                <span class="navbar-toggler-icon"></span>
+
+            </button>
+
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+
+                <!-- MENU -->
+                <ul class="navbar-nav me-auto">
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('inicio') }}">
+                            Inicio
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('catalogo') }}">
+                            Productos
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('servicios') }}">
+                            Servicios
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('nosotros') }}">
+                            Nosotros
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('contacto') }}">
+                            Contacto
+                        </a>
+                    </li>
+
+                </ul>
+
+
+                <!-- USUARIO -->
+                <div class="dropdown">
+
+                    <button class="btn btn-outline-light dropdown-toggle"
+                        type="button"
+                        data-bs-toggle="dropdown">
+
+                        <i class="bi bi-person-circle"></i>
+
+                        {{ usuario.nombre }}
+
+                    </button>
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+
+                        <li>
+                            <a class="dropdown-item active"
+                                href="{{ url_for('perfil') }}">
+
+                                <i class="bi bi-person"></i>
+                                Mi perfil
+
+                            </a>
+                        </li>
+
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item text-danger"
+                                href="{{ url_for('logout') }}">
+
+                                <i class="bi bi-box-arrow-right"></i>
+                                Cerrar sesión
+
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+
+    <!-- CONTENIDO -->
+    <main class="container py-5">
+
+        <div class="row justify-content-center">
+
+            <div class="col-12 col-lg-8">
+
+                <!-- TARJETA PRINCIPAL -->
+                <div class="card shadow border-0">
+
+                    <!-- CABECERA -->
+                    <div class="profile-header text-center p-4">
+
+                        <div class="profile-icon mb-3">
+
+                            <i class="bi bi-person-fill"></i>
+
+                        </div>
+
+                        <h3 class="fw-bold mb-1">
+                            {{ usuario.nombre }}
+                        </h3>
+
+                        <p class="mb-0">
+                            <i class="bi bi-person-badge"></i>
+
+                            {{ usuario.rol }}
+
+                        </p>
+
+                    </div>
+
+
+                    <!-- INFORMACIÓN -->
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-4">
+                            <i class="bi bi-person-vcard text-primary"></i>
+                            Información de la cuenta
+                        </h4>
+                        <!-- NOMBRE -->
+                        <div class="info-item">
+                            <div class="row">
+                                <div class="col-md-4 text-muted">
+                                    <i class="bi bi-person me-2"></i>
+                                    Nombre completo
+                                </div>
+                                <div class="col-md-8 fw-semibold">
+                                    {{ usuario.nombre }}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- CORREO -->
+                        <div class="info-item">
+                            <div class="row">
+                                <div class="col-md-4 text-muted">
+                                    <i class="bi bi-envelope me-2"></i>
+                                    Correo electrónico
+                                </div>
+                                <div class="col-md-8 fw-semibold">
+                                    {{ usuario.correo }}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- TELEFONO -->
+                        <div class="info-item">
+                            <div class="row">
+                                <div class="col-md-4 text-muted">
+                                    <i class="bi bi-telephone me-2"></i>
+                                    Teléfono
+                                </div>
+                                <div class="col-md-8 fw-semibold">
+                                    {{ usuario.telefono }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ROL -->
+                        <div class="info-item">
+                            <div class="row">
+                                <div class="col-md-4 text-muted">
+                                    <i class="bi bi-shield-check me-2"></i>
+                                    Rol
+                                </div>
+                                <div class="col-md-8">
+                                    <span class="badge bg-primary">
+                                        {{ usuario.rol }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- BOTONES -->
+                        <div class="d-flex flex-column flex-md-row justify-content-end gap-2 mt-4">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalActualizar">
+                                <i class="bi bi-pencil-square"></i>Actualizar datos
+                            </button>
+                            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalContraseña">
+                                <i class="bi bi-key"></i>Cambiar contraseña
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+    <!-- ================================================= -->
+    <!-- MODAL ACTUALIZAR DATOS -->
+    <!-- ================================================= -->
+    <div class="modal fade" id="modalActualizar" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square"></i>
+                        Actualizar información
+                    </h5>
+                    <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal">
+                    </button>
+                </div>
+                <form action="{{ url_for('actualizar_perfil') }}"
+                    method="POST">
+                    <div class="modal-body">
+                        <!-- Nombre -->
+                        <div class="mb-3">
+                            <label class="form-label">Nombre completo</label>
+                            <input type="text" class="form-control" name="nombre" value="{{ usuario.nombre }}" required>
+                        </div>
+                        <!-- Correo -->
+                        <div class="mb-3">
+                            <label class="form-label">Correo electrónico</label>
+                            <input type="email" class="form-control" name="correo" value="{{ usuario.correo }}" readonly>
+                        </div>
+                        <!-- Teléfono -->
+                        <div class="mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input type="number" class="form-control" name="telefono" min="0" max="9999999999" value="{{ usuario.telefono }}" required>
+                        </div>
+                        <!-- Contraseña -->
+                         <div class="mb-3">
+                            <label class="form-label">Contraseña</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password0" id="password0" style="border-right: none;" required>
+                                <!--Bóton para mostrar contraseña ingresada-->
+                                <button class="btn btn-outline-secondary" type="button" style="border: 1px solid #ced4da; border-left: none;" onclick="mostrarPassword('password0', 'iconoPassword0')">
+                                    <i class="bi bi-eye" id="iconoPassword0"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"> <i class="bi bi-check-lg"></i>Guardar cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- ================================================= -->
+    <!-- MODAL ACTUALIZAR CONTRASEÑA -->
+    <!-- ================================================= -->
+    <div class="modal fade" id="modalContraseña" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="bi bi-pencil-square"></i>Actualizar contraseña</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ url_for('actualizar_contraseña') }}" method="POST">
+                    <div class="modal-body">
+                        <!-- Correo -->
+                        <div class="mb-3">
+                            <label class="form-label">Correo electrónico</label>
+                            <input type="email" class="form-control" name="correo" value="{{ usuario.correo }}" readonly>
+                        </div>
+                        <!-- Contraseña Actual -->
+                        <div class="mb-3">
+                            <label class="form-label">Contraseña Actual</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password1" id="password1" style="border-right: none;" required>
+                                <!--Bóton para mostrar contraseña ingresada-->
+                                <button class="btn btn-outline-secondary" type="button" style="border: 1px solid #ced4da; border-left: none;" onclick="mostrarPassword('password1', 'iconoPassword1')">
+                                    <i class="bi bi-eye" id="iconoPassword1"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Nueva Contraseña #1 -->
+                         <div class="mb-3">
+                            <label class="form-label">Nueva Contraseña</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password2" id="password2" style="border-right: none;" required>
+                                <!--Bóton para mostrar contraseña ingresada-->
+                                <button class="btn btn-outline-secondary" type="button" style="border: 1px solid #ced4da; border-left: none;" onclick="mostrarPassword('password2', 'iconoPassword2')">
+                                    <i class="bi bi-eye" id="iconoPassword2"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Nueva Contraseña #2-->
+                         <div class="mb-3">
+                            <label class="form-label">Confirmar Contraseña</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password3" id="password3" style="border-right: none;" required>
+                                <!--Bóton para mostrar contraseña ingresada-->
+                                <button class="btn btn-outline-secondary" type="button" style="border: 1px solid #ced4da; border-left: none;" onclick="mostrarPassword('password3', 'iconoPassword3')">
+                                    <i class="bi bi-eye" id="iconoPassword3"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"> <i class="bi bi-check-lg"></i>Guardar cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- FOOTER -->
+    <footer class="footer-tech pt-5 pb-3">
+
+        <div class="container">
+
+            <div class="row g-4">
+
+                <div class="col-md-6">
+
+                    <h5 class="text-white fw-bold">
+                        TECHSTORE
+                    </h5>
+
+                    <p class="small">
+                        Líderes en componentes de hardware y
+                        soluciones tecnológicas para profesionales
+                        y entusiastas del gaming.
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-6 text-md-end">
+
+                    <h6 class="text-white">
+                        Síguenos
+                    </h6>
+
+                    <div class="d-flex justify-content-md-end gap-3 fs-5">
+
+                        <i class="bi bi-facebook"></i>
+                        <i class="bi bi-instagram"></i>
+                        <i class="bi bi-twitter-x"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <hr class="my-4 border-secondary">
+
+
+            <div class="text-center small">
+
+                &copy; 2026 TechStore Colombia.
+                Desarrollado para ADSO.
+
+            </div>
+
+        </div>
+
+    </footer>
+
+
+    <!-- BOOTSTRAP JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+
+    <!-- SWEETALERT -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11">
+    </script>
+
+    <!-- MENSAJES FLASK -->
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% if mensajes %}
+            {% for categoria, mensaje in mensajes %}
+                <script>
+                    Swal.fire({
+                        icon: "{{ categoria }}",
+                        title: "{{ mensaje }}",
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                </script>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- MOSTRAR / OCULTAR CONTRASEÑA -->
+    <script>
+        function mostrarPassword(idPassword, idIcono) {
+            const password =
+                document.getElementById(idPassword);
+            const icono =
+                document.getElementById(idIcono);
+            if (password.type === "password") {
+                password.type = "text";
+                icono.classList.remove("bi-eye");
+                icono.classList.add("bi-eye-slash");
+            } else {
+                password.type = "password";
+                icono.classList.remove("bi-eye-slash");
+                icono.classList.add("bi-eye");
+            }
+        }
+
+    </script>
+<!--Función para mostrar/Ocultar contraseñas-->
+<script>
+    function mostrarPassword(idPassword, idIcono) {
+        const password = document.getElementById(idPassword);
+        const icono = document.getElementById(idIcono);
+
+        if (password.type === "password") {
+            password.type = "text";
+            icono.classList.remove("bi-eye");
+            icono.classList.add("bi-eye-slash");
+        } else {
+            password.type = "password";
+            icono.classList.remove("bi-eye-slash");
+            icono.classList.add("bi-eye");
+        }
+    }
+</script>
+</body>
+
+</html>
