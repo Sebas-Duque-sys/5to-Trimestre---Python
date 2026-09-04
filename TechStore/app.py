@@ -1,6 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file
 from database.conexion import obtener_conexion
 import re
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
+import io
 #import session
 
 app = Flask(__name__)
@@ -200,15 +205,82 @@ def eliminar_producto(codigo):
     conexion.close()
     return redirect(url_for("productos"))
 
+@app.route("/exportar_productos")
+def exportar_productos():
+    #Realizar consulta
+    conexion = obtener_conexion()
+    cursor = conexion.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM productos")
+    productos = cursor.fetchall()
+    longitud = len(productos)
+    cursor.close()
+    conexion.close()
+    #Lo que entendi al crear esto.
+    #pdf = canvas.Canvas() ==== canvas llama a la libreria. Canvas llama al modulo para crear un documento y dicho documento queda bajo la variable 'pdf'
+    #buffer es para crear un archivo temporal en el navegador en lugar de usar un archivo permanente o local
+    #pagesize=letter Es el tamaño de la página. letter es tamaño carta
+    #setFont = Define una fuente y un tamaño de letra para lo que se va a escribir
+    #drawString = Define que se va a escribir y en que posición. El primer valor el posición horizontal y la segunda es posición vertical
+    #y = Al ir definiendola y luego modificandola con calculos, creo lineas de escritura
+    #as_attachment=True. Define que es un archivo descargable
+    #download_name="lista_de_productos.pdf" Nombre del archivo a descargar
+    #mimetype="application/pdf" Define el formato en el que se genera el archivo
+    #1- Crear archivo
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    #Titulo
+    pdf.setFont("Helvetica-Bold", 18)
+    pdf.drawString(200, 750, "TechStore")
+    pdf.setFont("Helvetica", 12)
+    pdf.drawString(180, 730, "Listado de productos")
+    y = 690
+    #Encabezado
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.drawString(50, y, "Código")
+    pdf.drawString(130, y, "Nombre")
+    pdf.drawString(300, y, "Precio")
+    pdf.drawString(400, y, "Categoría")
+    y -= 20
+    #Contenido
+    pdf.setFont("Helvetica", 9)
+    for producto in productos:
+        pdf.drawString(50, y, producto["codigo"])
+        pdf.drawString(130, y, producto["nombre"])
+        pdf.drawString(300, y, "$"+str(producto["precio"]))
+        pdf.drawString(400, y, producto["categoria"])
+        y -= 20
+        #Crear nuevas páginas cuando se llegue al borde
+        if y < 50:
+            pdf.showPage()
+            pdf.setFont("Helvetica", 9)
+            y = 750
+
+    #Guardar PDF
+    pdf.save()
+    buffer.seek(0)
+    #Enviar como descargable al navegador
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name="lista_de_productos.pdf",
+        mimetype="application/pdf"
+    )
+    return render_template("productos.html",productos=productos,longitud=longitud)
+
 @app.route("/signup", methods=["POST"])
 def signup():
         #Recibir datos del formulario
         nombre = request.form.get("nombre")
         correo = request.form.get("correo")
-        password = request.form.get("password")
+        telefono = request.form.get("telefono")
+        password1 = request.form.get("password1")
+        password2 = request.form.get("password2")
         
-        #Validaciones
-        
+    #Validaciones
+        #Contraseñas iguales
+        if password1 != password2:
+            flash("Las contraseñas ingresadas no son iguales.", "error")
+            return redirect(url_for("inicio"))
         #Conexión a la base de datos
         conexion = obtener_conexion()
         cursor = conexion.cursor(dictionary=True)
@@ -217,12 +289,13 @@ def signup():
         validacion = cursor.fetchone()
         if validacion:
             flash("El correo ingresado ya está registrado. Por favor ingrese uno diferente.", "error")
+            # return redirect(url_for("inicio"))
             return redirect(url_for("inicio"))
         #Registro del usuario
-        sql = """INSERT INTO usuarios (nombre, correo, password) VALUES (%s, %s, %s)"""
-        cursor.execute(sql, (nombre, correo, password))
+        sql = """INSERT INTO usuarios (nombre, correo, telefono, password) VALUES (%s,%s, %s, %s)"""
+        cursor.execute(sql, (nombre, correo, telefono, password1))
         conexion.commit()
-        flash("Usuario registrado exitosamente", "success") 
+        flash("Usuario registrado exitosamente", "success")
         cursor.close()
         conexion.close()
         return redirect(url_for("inicio"))
@@ -246,9 +319,14 @@ def login():
     if usuario:
         session["usuario"] = usuario["nombre"]
         session["rol"] = usuario["rol"]
-        return redirect(url_for("admin"))
+        session["correo"] = usuario["correo"]
+        rol = usuario["rol"]
+        if rol == "Administrador":
+            return redirect(url_for("admin"))
+        else:
+            return redirect(url_for("perfil"))
     else:
-        flash("Correo o contraseña incorrectos", "danger")
+        flash("Correo o contraseña incorrectos", "error")
         return redirect(url_for("inicio"))
     
 @app.route("/admin")
@@ -257,9 +335,111 @@ def admin():
         return redirect(url_for("inicio"))
     return render_template("admin.html")
 
+@app.route("/perfil")
+def perfil():
+    if "usuario" not in session:
+        return redirect(url_for("inicio"))
+    #Consultar perfil
+    conexion = obtener_conexion()
+    cursor = conexion.cursor(dictionary=True)
+    sql = """ SELECT * FROM usuarios WHERE correo = %s """
+    correo = (session["correo"])
+    cursor.execute(sql, (correo,))
+    usuario = cursor.fetchone()
+    cursor.close()
+    conexion.close()
+    return render_template("perfil.html",usuario=usuario)
+
+@app.route("/actualizar_perfil",methods=["POST"])
+def actualizar_perfil():
+    if "usuario" not in session:
+        return redirect(url_for("inicio"))
+
+    nombre = request.form["nombre"]
+    correo = request.form["correo"]
+    telefono = request.form["telefono"]
+    password0 = request.form["password0"]
+
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    #Verificar contraseña
+    sql = """ SELECT * FROM usuarios WHERE correo = %s AND password = %s """
+    cursor.execute(sql,(correo, password0))
+    usuario = cursor.fetchone()
+    if usuario:
+        #Actualizar usuario
+        sql = """ UPDATE usuarios SET nombre = %s, telefono = %s WHERE correo = %s """
+        cursor.execute(sql,(nombre,telefono,correo))
+        conexion.commit()
+        flash ("Perfil actualizado exitosamente", "success")
+        cursor.close()
+        conexion.close()
+        return redirect(url_for("perfil"))
+    else:
+        #Error en contraseña
+        flash ("Contraseña incorrecta", "error")
+        cursor.close()
+        conexion.close()
+        return redirect(url_for("perfil"))
+
+@app.route("/actualizar_contraseña",methods=["POST"])
+def actualizar_contraseña():
+    if "usuario" not in session:
+        return redirect(url_for("inicio"))
+
+    correo = request.form["correo"]
+    password1 = request.form["password1"]
+    password2 = request.form["password2"]
+    password3 = request.form["password3"]
+
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    #Verificar igualdad en contraseñas
+    if password2 != password3:
+        flash("Las contraseñas ingresadas no son iguales.", "error")
+        return redirect(url_for("inicio"))
+    #Verificar contraseña actual
+    sql = """ SELECT * FROM usuarios WHERE correo = %s AND password = %s """
+    cursor.execute(sql,(correo, password1))
+    usuario = cursor.fetchone()
+    if usuario:
+        #Verificar que la nueva contraseña no sea igual
+        if password2 == password1:
+            flash("La nueva contraseña no puede ser igual a la actual.", "error")
+            cursor.close()
+            conexion.close()
+            return redirect(url_for("perfil"))
+        #Actualizar contraseña
+        sql = """ UPDATE usuarios SET password = %s WHERE correo = %s """
+        cursor.execute(sql,(password2,correo))
+        conexion.commit()
+        flash ("Contraseña actualizada exitosamente", "success")
+        cursor.close()
+        conexion.close()
+        return redirect(url_for("perfil"))
+    else:
+        #Error en contraseña
+        flash ("Contraseña incorrecta", "error")
+        cursor.close()
+        conexion.close()
+        return redirect(url_for("perfil"))
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("inicio"))
 
+@app.route("/pruebas")
+def pruebas():
+    correo = 'cliente1@gmail.com'
+    password = 'Prueba'
+    conexion = obtener_conexion()
+    cursor = conexion.cursor(dictionary=True)
+    sql = """SELECT * FROM usuarios WHERE correo = %s AND password = %s AND estado = 'activo'"""
+    cursor.execute(sql, (correo, password))
+    usuario = cursor.fetchone()
+    cursor.close()
+    conexion.close()
+    sesion = session["rol"]
+    return sesion
 app.run(debug=True)
