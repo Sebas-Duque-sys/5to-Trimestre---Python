@@ -269,36 +269,40 @@ def exportar_productos():
 
 @app.route("/signup", methods=["POST"])
 def signup():
-        #Recibir datos del formulario
-        nombre = request.form.get("nombre")
-        correo = request.form.get("correo")
-        telefono = request.form.get("telefono")
-        password1 = request.form.get("password1")
-        password2 = request.form.get("password2")
-        
+    #Recibir datos del formulario
+    nombre = request.form.get("nombre")
+    correo = request.form.get("correo")
+    telefono = request.form.get("telefono")
+    password1 = request.form.get("password1")
+    password2 = request.form.get("password2")
+    
     #Validaciones
-        #Contraseñas iguales
-        if password1 != password2:
-            flash("Las contraseñas ingresadas no son iguales.", "error")
-            return redirect(url_for("inicio"))
-        #Conexión a la base de datos
-        conexion = obtener_conexion()
-        cursor = conexion.cursor(dictionary=True)
-        #Validación de correo duplicado
-        cursor.execute("SELECT * FROM usuarios WHERE correo = %s", (correo,))
-        validacion = cursor.fetchone()
-        if validacion:
-            flash("El correo ingresado ya está registrado. Por favor ingrese uno diferente.", "error")
-            # return redirect(url_for("inicio"))
-            return redirect(url_for("inicio"))
-        #Registro del usuario
-        sql = """INSERT INTO usuarios (nombre, correo, telefono, password) VALUES (%s,%s, %s, %s)"""
-        cursor.execute(sql, (nombre, correo, telefono, password1))
-        conexion.commit()
-        flash("Usuario registrado exitosamente", "success")
-        cursor.close()
-        conexion.close()
+    #Telefono
+    if not re.fullmatch(r"^3\d{9}$", telefono):
+        flash("Ingrese un número de celular válido de 10 dígitos", "error")
         return redirect(url_for("inicio"))
+    #Contraseñas iguales
+    if password1 != password2:
+        flash("Las contraseñas ingresadas no son iguales.", "error")
+        return redirect(url_for("inicio"))
+    #Conexión a la base de datos
+    conexion = obtener_conexion()
+    cursor = conexion.cursor(dictionary=True)
+    #Validación de correo duplicado
+    cursor.execute("SELECT * FROM usuarios WHERE correo = %s", (correo,))
+    validacion = cursor.fetchone()
+    if validacion:
+        flash("El correo ingresado ya está registrado. Por favor ingrese uno diferente.", "error")
+        # return redirect(url_for("inicio"))
+        return redirect(url_for("inicio"))
+    #Registro del usuario
+    sql = """INSERT INTO usuarios (nombre, correo, telefono, password) VALUES (%s,%s, %s, %s)"""
+    cursor.execute(sql, (nombre, correo, telefono, password1))
+    conexion.commit()
+    flash("Usuario registrado exitosamente", "success")
+    cursor.close()
+    conexion.close()
+    return redirect(url_for("inicio"))
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -362,6 +366,10 @@ def actualizar_perfil():
 
     conexion = obtener_conexion()
     cursor = conexion.cursor()
+    #Validar teléfono
+    if not re.fullmatch(r"^3\d{9}$", telefono):
+        flash("Ingrese un número de celular válido de 10 dígitos", "error")
+        return redirect(url_for("perfil"))
     #Verificar contraseña
     sql = """ SELECT * FROM usuarios WHERE correo = %s AND password = %s """
     cursor.execute(sql,(correo, password0))
