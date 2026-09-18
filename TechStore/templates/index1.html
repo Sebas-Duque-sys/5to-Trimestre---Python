@@ -276,18 +276,18 @@
                     <form action="/signup" method="POST">
 
                         <div class="mb-3">
-                            <label class="form-label">Nombre completo</label>
-                            <input type="text" class="form-control" name="nombre" required>
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" name="nombre" placeholder="Ingrese su nombre completo" required>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Correo</label>
-                            <input type="email" class="form-control" name="correo" required>
+                            <input type="email" class="form-control" name="correo" placeholder="ejemplo@correo.com" required>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Teléfono</label>
-                            <input type="number" class="form-control" name="telefono" min="1000000000" max="9999999999" required>
+                            <input type="tel" class="form-control" name="telefono" pattern="3[0-9]{9}" minlength="10" maxlength="10" inputmode="numeric" placeholder="3001234567" required>
                         </div>
                         
                         <div class="mb-3">
