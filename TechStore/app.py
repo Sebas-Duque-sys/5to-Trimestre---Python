@@ -6,6 +6,9 @@ from reportlab.pdfgen import canvas
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 import io
+from werkzeug.utils import secure_filename
+import os
+from werkzeug.security import generate_password_hash, check_password_hash
 #import session
 
 app = Flask(__name__)
@@ -68,6 +71,8 @@ def guardar_producto():
     nombre = request.form.get("nombre", "").strip()
     precio = request.form.get("precio", "").strip()
     categoria = request.form.get("categoria", "").strip()
+    imagen = request.files.get("imagen")
+
     #Validación 2: Validar que los campos no estén vacíos.
     if not codigo or not nombre or not precio or not categoria:
         flash("Todos los campos son obligatorios.", "error")
@@ -86,13 +91,7 @@ def guardar_producto():
     if precio <= 0:
         flash("El precio no puede ser negativo.", "error")
         #Devolver a formulario de registro y guardar datos ingresados.
-        return render_template(
-            "registro_producto.html",
-            codigo=codigo,
-            nombre=nombre,
-            precio=precio,
-            categoria=categoria
-        )
+        return render_template("registro_producto.html",codigo=codigo,nombre=nombre,precio=precio,categoria=categoria)
     #Validación 8: Validar que el precio no sea mayor a 5.000.000
     elif precio > 500000:
         flash("El precio no puede ser mayor a 5.000.000", "error")
@@ -135,10 +134,22 @@ def guardar_producto():
         conexion.close()
         flash("El código ingresado ya existe. Por favor ingrese uno diferente.","error")
         return render_template("registro_producto.html",codigo=codigo,nombre=nombre,precio=precio,categoria=categoria)
-    
+
+    #Guardar imagen
+    if imagen and imagen.filename != "":
+        nombre_imagen = secure_filename(imagen.filename)
+        ruta = os.path.join(
+            "static/uploads/imagenes",
+            nombre_imagen
+        )
+        imagen.save(ruta)
+    else:
+        flash("Ingrese una imagen para el producto.", "error")
+        return render_template("registro_producto.html",codigo=codigo,nombre=nombre,precio=precio,categoria=categoria)
+        
     #Si no está registrado, realizar registro
-    sql = """ INSERT INTO productos VALUES (%s,%s,%s,%s) """
-    cursor.execute(sql,(codigo,nombre,precio,categoria))
+    sql = """ INSERT INTO productos VALUES (%s,%s,%s,%s,%s) """
+    cursor.execute(sql,(codigo,nombre,precio,categoria,nombre_imagen))
     #Guardan los cambios realizados por la consulta
     conexion.commit()
     #Mensaje de exito:
@@ -167,23 +178,36 @@ def actualizar_producto():
     if "usuario" not in session:
         return redirect(url_for("inicio"))
 
-    codigo = request.form["codigo"]
-    nombre = request.form["nombre"]
-    precio = request.form["precio"]
-    categoria = request.form["categoria"]
+    codigo = request.form.get("codigo", "").strip()
+    nombre = request.form.get("nombre", "").strip()
+    precio = request.form.get("precio", "").strip()
+    categoria = request.form.get("categoria", "").strip()
+    imagen = request.files.get("imagen")
 
+    #Obtener imagen actual
     conexion = obtener_conexion()
     cursor = conexion.cursor()
-    sql = """ UPDATE productos SET nombre = %s, precio = %s, categoria = %s WHERE codigo = %s """
-    cursor.execute(
-        sql,
-        (
-            nombre,
-            precio,
-            categoria,
-            codigo
+    sql = """ SELECT imagen_url FROM productos WHERE codigo = %s """
+    cursor.execute(sql,(codigo,))
+    nombre_img = cursor.fetchone()
+    nombre_imagen = nombre_img[0]
+    cursor.close()
+    conexion.close()
+
+    #Si se agrega una nueva imagen
+    if imagen and imagen.filename != "":
+        nombre_imagen = secure_filename(imagen.filename)
+        ruta = os.path.join(
+            "static/uploads/imagenes",
+            nombre_imagen
         )
-    )
+        imagen.save(ruta)
+
+    #Actualizar registro
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    sql = """ UPDATE productos SET nombre = %s, precio = %s, categoria = %s, imagen_url = %s WHERE codigo = %s """
+    cursor.execute(sql,(nombre,precio,categoria,nombre_imagen,codigo))
     conexion.commit() 
     flash ("Producto actualizado exitosamente", "success")
     cursor.close()
@@ -285,6 +309,7 @@ def signup():
     if password1 != password2:
         flash("Las contraseñas ingresadas no son iguales.", "error")
         return redirect(url_for("inicio"))
+    password_hasheada = generate_password_hash(password1)
     #Conexión a la base de datos
     conexion = obtener_conexion()
     cursor = conexion.cursor(dictionary=True)
@@ -297,7 +322,7 @@ def signup():
         return redirect(url_for("inicio"))
     #Registro del usuario
     sql = """INSERT INTO usuarios (nombre, correo, telefono, password) VALUES (%s,%s, %s, %s)"""
-    cursor.execute(sql, (nombre, correo, telefono, password1))
+    cursor.execute(sql, (nombre, correo, telefono, password_hasheada))
     conexion.commit()
     flash("Usuario registrado exitosamente", "success")
     cursor.close()
@@ -311,16 +336,16 @@ def login():
 
     correo = request.form.get("correo")
     password = request.form.get("password")
-    
+
     conexion = obtener_conexion()
     cursor = conexion.cursor(dictionary=True)
-    sql = """SELECT * FROM usuarios WHERE correo = %s AND password = %s AND estado = 'activo'"""
-    cursor.execute(sql, (correo, password))
+    sql = """SELECT * FROM usuarios WHERE correo = %s AND estado = 'activo'"""
+    cursor.execute(sql, (correo,))
     usuario = cursor.fetchone()
     cursor.close()
     conexion.close()
 
-    if usuario:
+    if usuario and check_password_hash(usuario["password"],password):
         session["usuario"] = usuario["nombre"]
         session["rol"] = usuario["rol"]
         session["correo"] = usuario["correo"]
@@ -396,30 +421,33 @@ def actualizar_contraseña():
         return redirect(url_for("inicio"))
 
     correo = request.form["correo"]
+    #Actual
     password1 = request.form["password1"]
+    #Nuevas
     password2 = request.form["password2"]
     password3 = request.form["password3"]
 
     conexion = obtener_conexion()
-    cursor = conexion.cursor()
+    cursor = conexion.cursor(dictionary=True)
     #Verificar igualdad en contraseñas
     if password2 != password3:
         flash("Las contraseñas ingresadas no son iguales.", "error")
         return redirect(url_for("inicio"))
     #Verificar contraseña actual
-    sql = """ SELECT * FROM usuarios WHERE correo = %s AND password = %s """
-    cursor.execute(sql,(correo, password1))
+    sql = """ SELECT * FROM usuarios WHERE correo = %s """
+    cursor.execute(sql,(correo,))
     usuario = cursor.fetchone()
-    if usuario:
+    if usuario and check_password_hash(usuario["password"],password1):
         #Verificar que la nueva contraseña no sea igual
         if password2 == password1:
             flash("La nueva contraseña no puede ser igual a la actual.", "error")
             cursor.close()
             conexion.close()
             return redirect(url_for("perfil"))
+        password_hasheada = generate_password_hash(password2)
         #Actualizar contraseña
         sql = """ UPDATE usuarios SET password = %s WHERE correo = %s """
-        cursor.execute(sql,(password2,correo))
+        cursor.execute(sql,(password_hasheada,correo))
         conexion.commit()
         flash ("Contraseña actualizada exitosamente", "success")
         cursor.close()
