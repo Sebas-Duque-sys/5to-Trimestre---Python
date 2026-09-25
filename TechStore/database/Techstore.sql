@@ -11,8 +11,8 @@ rol ENUM('Administrador', 'Cliente') DEFAULT 'Cliente',
 estado ENUM('Activo','Inactivo') DEFAULT 'Activo');
 
 INSERT INTO usuarios(nombre, correo, telefono, password, rol, estado) VALUES
-('Sebastian', 'jsdg@gmail.com', '3217252560', 'ADSO321', 'Administrador', 'Activo'),
-('Admin', 'admin@techsore.com', '3213214321', 'SENA60', 'Administrador', 'Activo');
+('Sebastian', 'jsdg@gmail.com', '3217252560', 'scrypt:32768:8:1$AOc2ZcDbINjnCpab$c28edf81386493705450fd4249f1381e129b99fcaef3c33a2122bbad23132eeab8d0fd354ab14c2a7cbcd17a9ea5e5e86f9d5776d4646b937d98c7ddc6c9db9e', 'Administrador', 'Activo'),
+('Admin', 'admin@techsore.com', '3213214321', 'scrypt:32768:8:1$w3CdBAJxO93F5fz0$59c3da70e3db5bd84f98cafaa8e4c591a69c36d36973531948ec9b90056553e2fc9503acc768e9de4322e3ca95699b04b562e177c3ce135c0a30631cbeecec8e', 'Administrador', 'Activo');
 
 CREATE TABLE productos(
 codigo VARCHAR(20) PRIMARY KEY,
